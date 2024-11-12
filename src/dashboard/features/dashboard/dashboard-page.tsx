@@ -12,7 +12,7 @@ import { Header } from "./header";
 import {
   getCopilotMetrics,
   IFilter,
-} from "./services/copilot-metrics-service";
+} from "@/services/copilot-metrics-service";
 import { getCopilotSeats, getCopilotSeatsAssignment } from "./services/copilot-seat-service";
 import SeatAnalysis from "./tables/seat-analysis";
 

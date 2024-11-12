@@ -3,7 +3,7 @@ import {
   unknownResponseError,
 } from "@/features/common/response-error";
 import { ServerActionResponse } from "@/features/common/server-action-response";
-import { ensureGitHubEnvConfig } from "./env-service";
+import { ensureGitHubEnvConfig } from "@/services/env-service";
 
 export interface EnterpriseResponse {
   total_seats: number;

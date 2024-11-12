@@ -6,7 +6,7 @@ import { formatDate } from "@/utils/helpers";
 
 import { proxy, useSnapshot } from "valtio";
 import { SeatManagement, CopilotSeats } from "./services/copilot-seat-service";
-import { groupByTimeFrame } from "./utils/data-mapper";
+import { groupByTimeFrame } from "@/utils/data-mapper";
 
 interface IProps extends PropsWithChildren {
   copilotUsages: CopilotUsageOutput[];
