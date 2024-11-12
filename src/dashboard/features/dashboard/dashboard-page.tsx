@@ -9,8 +9,12 @@ import { TotalSuggestionsAndAcceptances } from "./charts/total-suggestions-and-a
 import { DataProvider } from "./dashboard-state";
 import { TimeFrameToggle } from "./filter/time-frame-toggle";
 import { Header } from "./header";
-import { getCopilotMetrics, IFilter as MetricsFilter } from "@/services/copilot-metrics-service";
-import { getCopilotSeatsManagement, IFilter as SeatServiceFilter } from "@/services/copilot-seat-service";
+import {
+  getCopilotMetrics,
+  IFilter,
+} from "@/services/copilot-metrics-service";
+import { getCopilotSeats, getCopilotSeatsAssignment } from "./services/copilot-seat-service";
+import SeatAnalysis from "./tables/seat-analysis";
 
 export interface IProps {
   searchParams: MetricsFilter;
@@ -18,8 +22,9 @@ export interface IProps {
 
 export default async function Dashboard(props: IProps) {
   const allDataPromise = getCopilotMetrics(props.searchParams);
-  const seatsPromise = getCopilotSeatsManagement({} as SeatServiceFilter);
-  const [allData, seats] = await Promise.all([allDataPromise, seatsPromise]);
+  const usagePromise = getCopilotSeats();
+  const seatsPromise = getCopilotSeatsAssignment();
+  const [allData, usage, seats] = await Promise.all([allDataPromise, usagePromise, seatsPromise]);
 
   if (allData.status !== "OK") {
     return <ErrorPage error={allData.errors[0].message} />;
@@ -29,10 +34,15 @@ export default async function Dashboard(props: IProps) {
     return <ErrorPage error={seats.errors[0].message} />;
   }
 
+  if (seats.status !== "OK") {
+    return <ErrorPage error={seats.errors[0].message} />;
+  }
+
   return (
     <DataProvider
       copilotUsages={allData.response}
-      seatManagement={seats.response?.seats}
+      seatManagement={usage.response}
+      copilotSeats={seats.response}
     >
       <main className="flex flex-1 flex-col gap-4 md:gap-8 pb-8">
         <Header />
@@ -49,6 +59,7 @@ export default async function Dashboard(props: IProps) {
             <Language />
             <Editor />
             <ActiveUsers />
+            <SeatAnalysis />
           </div>
         </div>
       </main>
