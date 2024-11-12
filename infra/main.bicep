@@ -9,18 +9,16 @@ param name string
 @description('Primary location for all resources')
 param location string
 
-
-
 @description('Name of GitHub enterprise')
 @minLength(1)
 param githubEnterpriseName string
 
-@description('Name of GitHub organisation')
+@description('Name of GitHub Organization')
 @minLength(1)
-param githubOrganisationName string
+param githubOrganizationName string
 
 @description('GitHub API scope: "enterprise" or "organization"')
-@allowed(['enterprise','organization'])
+@allowed(['enterprise', 'organization'])
 param githubAPIScope string
 
 @secure()
@@ -30,6 +28,15 @@ param githubToken string
 @description('API version for the GitHub API e.g. 2022-11-28')
 @minLength(1)
 param githubAPIVersion string = '2022-11-28'
+
+@description('True to use Test Data instead of calling the real API')
+param useTestData bool
+
+@description('True to ingest data using the new Metrics API')
+param useMetricsApi bool
+
+@description('List of team names - works with the new Metrics API')
+param teamNames array
 
 param resourceGroupName string = ''
 
@@ -53,9 +60,12 @@ module resources 'resources.bicep' = {
     location: location
     githubToken: githubToken
     githubEnterpriseName: githubEnterpriseName
-    githubOrganisationName: githubOrganisationName
+    githubOrganizationName: githubOrganizationName
     githubAPIVersion: githubAPIVersion
     githubAPIScope: githubAPIScope
+    teamNames: teamNames
+    useMetricsApi: useMetricsApi
+    useTestData: useTestData
   }
 }
 

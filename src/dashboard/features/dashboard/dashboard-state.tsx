@@ -1,8 +1,8 @@
 "use client";
 
 import { PropsWithChildren } from "react";
-import { CopilotUsageOutput } from "./services/copilot-metrics-service";
-import { formatDate } from "./utils/helpers";
+import { Breakdown, CopilotUsageOutput } from "@/services/copilot-metrics-service";
+import { formatDate } from "@/utils/helpers";
 
 import { proxy, useSnapshot } from "valtio";
 import { SeatManagement, CopilotSeats } from "./services/copilot-seat-service";
@@ -81,7 +81,7 @@ class DashboardState {
 
     if (selectedLanguages.length !== 0) {
       data.forEach((item) => {
-        const filtered = item.breakdown.filter((breakdown) =>
+        const filtered = item.breakdown.filter((breakdown: Breakdown) =>
           selectedLanguages.some(
             (selectedLanguage) => selectedLanguage.value === breakdown.language
           )
@@ -92,7 +92,7 @@ class DashboardState {
 
     if (selectedEditors.length !== 0) {
       data.forEach((item) => {
-        const filtered = item.breakdown.filter((breakdown) =>
+        const filtered = item.breakdown.filter((breakdown: Breakdown) =>
           selectedEditors.some((editor) => editor.value === breakdown.editor)
         );
         item.breakdown = filtered;

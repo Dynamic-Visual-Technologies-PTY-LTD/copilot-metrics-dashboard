@@ -17,7 +17,7 @@ import { getCopilotSeats, getCopilotSeatsAssignment } from "./services/copilot-s
 import SeatAnalysis from "./tables/seat-analysis";
 
 export interface IProps {
-  searchParams: IFilter;
+  searchParams: MetricsFilter;
 }
 
 export default async function Dashboard(props: IProps) {
@@ -30,8 +30,8 @@ export default async function Dashboard(props: IProps) {
     return <ErrorPage error={allData.errors[0].message} />;
   }
 
-  if (usage.status !== "OK") {
-    return <ErrorPage error={usage.errors[0].message} />;
+  if (seats.status !== "OK") {
+    return <ErrorPage error={seats.errors[0].message} />;
   }
 
   if (seats.status !== "OK") {
