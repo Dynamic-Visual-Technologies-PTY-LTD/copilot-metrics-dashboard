@@ -51,9 +51,33 @@ export const applyTimeFrameLabel = (
       total_code_lines_suggested: item.copilot_ide_code_completions.editors.reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_lines_suggested || 0), 0), 0), 0),
       total_code_lines_accepted: item.copilot_ide_code_completions.editors.reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_lines_accepted || 0), 0), 0), 0),
       total_chat_engaged_users: item.copilot_ide_chat.total_engaged_users,
-      total_chats: item.copilot_ide_chat.editors.reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chats || 0), 0)), 0),
-      total_chat_insertion_events: item.copilot_ide_chat.editors.reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chat_insertion_events || 0), 0)), 0),
-      total_chat_copy_events: item.copilot_ide_chat.editors.reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chat_copy_events || 0), 0)), 0),
+      total_chats: (item.copilot_ide_chat?.editors ?? []).reduce(
+        (acc, editor) =>
+          acc +
+          ((editor.models ?? []).reduce(
+            (modelAcc, model) => modelAcc + (model.total_chats || 0),
+            0
+          ) || 0),
+        0
+      ),
+      total_chat_insertion_events: (item.copilot_ide_chat?.editors ?? []).reduce(
+        (acc, editor) =>
+          acc +
+          ((editor.models ?? []).reduce(
+            (modelAcc, model) => modelAcc + (model.total_chat_insertion_events || 0),
+            0
+          ) || 0),
+        0
+      ),
+      total_chat_copy_events: (item.copilot_ide_chat?.editors ?? []).reduce(
+        (acc, editor) =>
+          acc +
+          ((editor.models ?? []).reduce(
+            (modelAcc, model) => modelAcc + (model.total_chat_copy_events || 0),
+            0
+          ) || 0),
+        0
+      ),
       day: item.date,
       breakdown: breakdowns,
       time_frame_week: weekIdentifier,
