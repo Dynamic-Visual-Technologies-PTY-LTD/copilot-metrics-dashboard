@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace Microsoft.CopilotDashboard.DataIngestion.Services
 {
-    public class GitHubCopilotApiService
+    public class GitHubCopilotSeatsClient
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger _logger;
-        public GitHubCopilotApiService(HttpClient httpClient, ILogger<GitHubCopilotApiService> logger)
+        public GitHubCopilotSeatsClient(HttpClient httpClient, ILogger<GitHubCopilotSeatsClient> logger)
         {
             _httpClient = httpClient;
             _logger = logger;
@@ -53,7 +53,7 @@ namespace Microsoft.CopilotDashboard.DataIngestion.Services
                 }
                 var content = await response.Content.ReadAsStringAsync();
                 var data = JsonSerializer.Deserialize<CopilotAssignedSeats>(content)!;
-                allSeats.AddRange(data.Seats); 
+                allSeats.AddRange(data.Seats!); 
 
                 url = Helpers.GetNextPageUrl(response.Headers);
             }
@@ -101,7 +101,7 @@ namespace Microsoft.CopilotDashboard.DataIngestion.Services
                 }
                 var content = await response.Content.ReadAsStringAsync();
                 var data = JsonSerializer.Deserialize<CopilotAssignedSeats>(content)!;
-                allSeats.AddRange(data.Seats);
+                allSeats.AddRange(data.Seats!);
 
                 url = Helpers.GetNextPageUrl(response.Headers);
             }
