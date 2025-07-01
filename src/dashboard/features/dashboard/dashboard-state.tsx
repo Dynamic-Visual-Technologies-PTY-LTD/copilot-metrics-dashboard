@@ -81,21 +81,25 @@ class DashboardState {
 
     if (selectedLanguages.length !== 0) {
       data.forEach((item) => {
-        const filtered = item.breakdown.filter((breakdown: Breakdown) =>
-          selectedLanguages.some(
-            (selectedLanguage) => selectedLanguage.value === breakdown.language
-          )
-        );
-        item.breakdown = filtered;
+        if (item.breakdown && Array.isArray(item.breakdown)) {
+          const filtered = item.breakdown.filter((breakdown: Breakdown) =>
+            selectedLanguages.some(
+              (selectedLanguage) => selectedLanguage.value === breakdown.language
+            )
+          );
+          item.breakdown = filtered;
+        }
       });
     }
 
     if (selectedEditors.length !== 0) {
       data.forEach((item) => {
-        const filtered = item.breakdown.filter((breakdown: Breakdown) =>
-          selectedEditors.some((editor) => editor.value === breakdown.editor)
-        );
-        item.breakdown = filtered;
+        if (item.breakdown && Array.isArray(item.breakdown)) {
+          const filtered = item.breakdown.filter((breakdown: Breakdown) =>
+            selectedEditors.some((editor) => editor.value === breakdown.editor)
+          );
+          item.breakdown = filtered;
+        }
       });
     }
 
@@ -107,15 +111,17 @@ class DashboardState {
     const languages: DropdownFilterItem[] = [];
 
     this.apiData.forEach((item) => {
-      item.breakdown.forEach((breakdown) => {
-        const index = languages.findIndex(
-          (language) => language.value === breakdown.language
-        );
+      if (item.breakdown && Array.isArray(item.breakdown)) {
+        item.breakdown.forEach((breakdown) => {
+          const index = languages.findIndex(
+            (language) => language.value === breakdown.language
+          );
 
-        if (index === -1) {
-          languages.push({ value: breakdown.language, isSelected: false });
-        }
-      });
+          if (index === -1) {
+            languages.push({ value: breakdown.language, isSelected: false });
+          }
+        });
+      }
     });
 
     return languages;
@@ -124,15 +130,17 @@ class DashboardState {
   private extractUniqueEditors(): DropdownFilterItem[] {
     const editors: DropdownFilterItem[] = [];
     this.apiData.forEach((item) => {
-      item.breakdown.forEach((breakdown) => {
-        const index = editors.findIndex(
-          (editor) => editor.value === breakdown.editor
-        );
+      if (item.breakdown && Array.isArray(item.breakdown)) {
+        item.breakdown.forEach((breakdown) => {
+          const index = editors.findIndex(
+            (editor) => editor.value === breakdown.editor
+          );
 
-        if (index === -1) {
-          editors.push({ value: breakdown.editor, isSelected: false });
-        }
-      });
+          if (index === -1) {
+            editors.push({ value: breakdown.editor, isSelected: false });
+          }
+        });
+      }
     });
 
     return editors;
