@@ -40,10 +40,6 @@ export default async function Dashboard(props: IProps) {
     return <ErrorPage error={metrics.errors[0].message} />;
   }
 
-  if (usage.status !== "OK") {
-    return <ErrorPage error={usage.errors[0].message} />;
-  }
-
   if (seats.status !== "OK") {
     return <ErrorPage error={seats.errors[0].message} />;
   }

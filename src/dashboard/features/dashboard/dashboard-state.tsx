@@ -277,7 +277,7 @@ class DashboardState {
           editors.push({ value: breakdown.editor, isSelected: false });
         }
       });
-    });
+    }});
 
     return editors.sort((a, b) => a.value.localeCompare(b.value));
   }
