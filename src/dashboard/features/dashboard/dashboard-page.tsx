@@ -16,7 +16,7 @@ import { getCopilotSeatsManagement, getAllCopilotSeatsTeams, IFilter as SeatServ
 import { cosmosConfiguration } from "@/services/cosmos-db-service";
 
 export interface IProps {
-  searchParams: IFilter;
+  searchParams: MetricsFilter;
 }
 
 export default async function Dashboard(props: IProps) {
