@@ -163,13 +163,16 @@ export const computeActiveUserAverage = (
   );
 
   const averageActiveUsers = activeUsersSum / filteredData.length;
-  return averageActiveUsers;
+  return averageActiveUsers > 0 ? averageActiveUsers : 0;
 };
 
-export const computeAdoptionRate = (seatManagement: any) => {
+export const computeAdoptionRate = (seatsData: any) => {
+  if (!seatsData || !seatsData.total_seats || seatsData.total_seats === 0) {
+    return 0;
+  }
   const adoptionRate =
-    (seatManagement.seat_breakdown.active_this_cycle /
-      seatManagement.seat_breakdown.total) *
+    (seatsData.total_active_seats /
+      seatsData.total_seats) *
     100;
   return adoptionRate;
 };
@@ -193,8 +196,9 @@ export const computeCumulativeAcceptanceAverage = (
 
   const comulativeAcceptanceRate = totalAcceptanceRate / acceptanceAverages.length;
   const comulativeChatAcceptanceRate = totalChatAcceptanceRate / acceptanceChatAverages.length;
+  const result = (comulativeAcceptanceRate + comulativeChatAcceptanceRate) / 2;
 
-  return (comulativeAcceptanceRate + comulativeChatAcceptanceRate) / 2;
+  return result > 0 ? result : 0;
 };
 
 export interface LineSuggestionsAndAcceptancesData {

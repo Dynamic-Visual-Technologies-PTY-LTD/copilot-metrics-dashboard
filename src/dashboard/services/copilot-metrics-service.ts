@@ -1,11 +1,5 @@
-import {
-  formatResponseError,
-  unknownResponseError,
-} from "@/features/common/response-error";
-import {
-  CopilotMetrics,
-  CopilotUsageOutput,
-} from "@/features/common/models";
+import { formatResponseError, unknownResponseError } from "@/features/common/response-error";
+import { CopilotMetrics, CopilotUsageOutput } from "@/features/common/models";
 import { ServerActionResponse } from "@/features/common/server-action-response";
 import { SqlQuerySpec } from "@azure/cosmos";
 import { format } from "date-fns";
@@ -19,7 +13,7 @@ export interface IFilter {
   endDate?: Date;
   enterprise: string;
   organization: string;
-  team: string;
+  team: string[];
 }
 
 export const getCopilotMetrics = async (
@@ -46,19 +40,97 @@ export const getCopilotMetrics = async (
           filter.organization = organization;
         }
         break;
-    }
-    if (isCosmosConfig) {
+    }    if (isCosmosConfig) {
       return getCopilotMetricsFromDatabase(filter);
     }
+    
+    // If teams are specified, use the teams-specific API function
+    if (filter.team && filter.team.length > 0) {
+      return getCopilotTeamsMetricsFromApi(filter);
+    }
+    
     return getCopilotMetricsFromApi(filter);
   } catch (e) {
     return unknownResponseError(e);
   }
 };
 
-export const getCopilotMetricsFromApi = async (filter: IFilter): Promise<
-  ServerActionResponse<CopilotUsageOutput[]>
-> => {
+const fetchCopilotMetrics = async (
+  url: string,
+  token: string,
+  version: string,
+  entityName: string
+): Promise<ServerActionResponse<CopilotUsageOutput[]>> => {
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: {
+      Accept: `application/vnd.github+json`,
+      Authorization: `Bearer ${token}`,
+      "X-GitHub-Api-Version": version,
+    },
+  });
+
+  if (!response.ok) {
+    return formatResponseError(entityName, response);
+  }
+
+  const data = await response.json();
+  const dataWithTimeFrame = applyTimeFrameLabel(data);
+  return {
+    status: "OK",
+    response: dataWithTimeFrame,
+  };
+};
+
+export const getCopilotMetricsFromApi = async (
+  filter: IFilter
+): Promise<ServerActionResponse<CopilotUsageOutput[]>> => {
+  const env = ensureGitHubEnvConfig();
+
+  if (env.status !== "OK") {
+    return env;
+  }
+  
+  if (filter.team && filter.team.length > 0) {
+    return getCopilotTeamsMetricsFromApi(filter);
+  }
+
+  const { token, version } = env.response;
+
+  try {
+    const queryParams = new URLSearchParams();
+
+    if (filter.startDate) {
+      queryParams.append("since", format(filter.startDate, "yyyy-MM-dd"));
+    }
+    if (filter.endDate) {
+      queryParams.append("until", format(filter.endDate, "yyyy-MM-dd"));
+    }
+
+    const queryString = queryParams.toString()
+      ? `?${queryParams.toString()}`
+      : "";
+
+    if (filter.enterprise) {
+      const url = `https://api.github.com/enterprises/${filter.enterprise}/copilot/metrics${queryString}`;
+      return fetchCopilotMetrics(url, token, version, filter.enterprise);
+    } else {
+      const url = `https://api.github.com/orgs/${filter.organization}/copilot/metrics${queryString}`;
+      return fetchCopilotMetrics(url, token, version, filter.organization);
+    }
+  } catch (e) {
+    return unknownResponseError(e);
+  }
+};
+
+/**
+ * Fetches Copilot metrics for specific teams from the GitHub API
+ * @param filter - Filter containing team names and date range
+ * @returns Promise with combined metrics for all specified teams
+ */
+export const getCopilotTeamsMetricsFromApi = async (
+  filter: IFilter
+): Promise<ServerActionResponse<CopilotUsageOutput[]>> => {
   const env = ensureGitHubEnvConfig();
 
   if (env.status !== "OK") {
@@ -66,55 +138,69 @@ export const getCopilotMetricsFromApi = async (filter: IFilter): Promise<
   }
 
   const { token, version } = env.response;
-
   try {
-    if(filter.enterprise) {
-      const response = await fetch(
-        `https://api.github.com/enterprises/${filter.enterprise}/copilot/metrics`,
-        {
-          cache: "no-store",
-          headers: {
-            Accept: `application/vnd.github+json`,
-            Authorization: `Bearer ${token}`,
-            "X-GitHub-Api-Version": version,
-          },
-        }
-      );
-  
-      if (!response.ok) {
-        return formatResponseError(filter.enterprise, response);
-      }
-  
-      const data = await response.json();
-      const dataWithTimeFrame = applyTimeFrameLabel(data);
+    // If no teams specified, return empty array
+    if (!filter.team || filter.team.length === 0) {
       return {
         status: "OK",
-        response: dataWithTimeFrame,
-      };
-    } else {
-      const response = await fetch(
-        `https://api.github.com/orgs/${filter.organization}/copilot/metrics`,
-        {
-          cache: "no-store",
-          headers: {
-            Accept: `application/vnd.github+json`,
-            Authorization: `Bearer ${token}`,
-            "X-GitHub-Api-Version": version,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        return formatResponseError(filter.organization, response);
-      }
-
-      const data = await response.json();
-      const dataWithTimeFrame = applyTimeFrameLabel(data);
-      return {
-        status: "OK",
-        response: dataWithTimeFrame,
+        response: [],
       };
     }
+
+    const queryParams = new URLSearchParams();
+
+    if (filter.startDate) {
+      queryParams.append("since", format(filter.startDate, "yyyy-MM-dd"));
+    }
+    if (filter.endDate) {
+      queryParams.append("until", format(filter.endDate, "yyyy-MM-dd"));
+    }
+
+    const queryString = queryParams.toString()
+      ? `?${queryParams.toString()}`
+      : "";
+
+    // Fetch metrics for each team and combine results
+    const teamMetricsPromises = filter.team.map(async (teamSlug) => {
+      let url: string;
+      let entityName: string;
+
+      if (filter.enterprise) {
+        // For enterprise-level team metrics
+        url = `https://api.github.com/enterprises/${filter.enterprise}/team/${teamSlug}/copilot/metrics${queryString}`;
+        entityName = `${filter.enterprise}/team/${teamSlug}`;
+      } else {
+        // For organization-level team metrics
+        url = `https://api.github.com/orgs/${filter.organization}/team/${teamSlug}/copilot/metrics${queryString}`;
+        entityName = `${filter.organization}/team/${teamSlug}`;
+      }
+
+      return fetchCopilotMetrics(url, token, version, entityName);
+    });
+
+    const teamMetricsResults = await Promise.all(teamMetricsPromises);
+
+    // Check if any requests failed
+    const failedResults = teamMetricsResults.filter(result => result.status !== "OK");
+    if (failedResults.length > 0) {
+      // Return the first error encountered
+      return failedResults[0];
+    }
+
+    // Combine all successful results
+    const allMetrics: CopilotUsageOutput[] = [];
+    teamMetricsResults.forEach(result => {
+      if (result.status === "OK") {
+        allMetrics.push(...result.response);
+      }    });
+
+    // Sort by day to maintain consistency
+    allMetrics.sort((a, b) => new Date(a.day).getTime() - new Date(b.day).getTime());
+
+    return {
+      status: "OK",
+      response: allMetrics,
+    };
   } catch (e) {
     return unknownResponseError(e);
   }
@@ -168,10 +254,21 @@ export const getCopilotMetricsFromDatabase = async (
       value: filter.organization,
     });
   }
-  
-  if (filter.team) {
-    querySpec.query += ` AND c.team = @team`;
-    querySpec.parameters?.push({ name: "@team", value: filter.team });
+  if (filter.team && filter.team.length > 0) {
+    if (filter.team.length === 1) {
+      querySpec.query += ` AND c.team = @team`;
+      querySpec.parameters?.push({ name: "@team", value: filter.team[0] });
+    } else {
+      const teamConditions = filter.team
+        .map((_, index) => `c.team = @team${index}`)
+        .join(" OR ");
+      querySpec.query += ` AND (${teamConditions})`;
+      filter.team.forEach((team, index) => {
+        querySpec.parameters?.push({ name: `@team${index}`, value: team });
+      });
+    }
+  }else {
+    querySpec.query += ` AND c.team = null`;
   }
 
   const { resources } = await container.items

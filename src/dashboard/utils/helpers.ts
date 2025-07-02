@@ -24,79 +24,36 @@ export const applyTimeFrameLabel = (
     // Create a breakdown array
     let breakdowns: Breakdown[] = [];
 
-    // Add null checks to prevent TypeError
-    if (item.copilot_ide_code_completions?.editors) {
-      item.copilot_ide_code_completions.editors.forEach((editor) => {
-        if (editor?.models) {
-          editor.models.forEach((model) => {
-            if (model?.languages) {
-              model.languages.forEach((language) => {
-                breakdowns.push({
-                  editor: editor.name?.toLowerCase() || 'unknown',
-                  model: model.name || 'unknown',
-                  language: language.name || 'unknown',
-                  suggestions_count: language.total_code_suggestions || 0,
-                  acceptances_count: language.total_code_acceptances || 0,
-                  lines_suggested: language.total_code_lines_suggested || 0,
-                  lines_accepted: language.total_code_lines_accepted || 0,
-                  active_users: language.total_engaged_users || 0
-                } as Breakdown);
-              });
-            }
-          });
-        }
+    (item.copilot_ide_code_completions.editors|| []).forEach((editor) => {
+      editor.models.forEach((model) => {
+        model.languages!.forEach((language) => {
+          breakdowns.push({
+            editor: editor.name.toLowerCase(),
+            model: model.name,
+            language: language.name,
+            suggestions_count: language.total_code_suggestions,
+            acceptances_count: language.total_code_acceptances,
+            lines_suggested: language.total_code_lines_suggested,
+            lines_accepted: language.total_code_lines_accepted,
+            active_users: language.total_engaged_users
+          } as Breakdown);
+        });
       });
-    }
+    });
 
     const output: CopilotUsageOutput = {
       ...item,
-      total_active_users: item.total_active_users || 0,
-      total_engaged_users: item.total_engaged_users || 0,
-      total_ide_engaged_users: item.copilot_ide_code_completions?.total_engaged_users || 0,
-      total_code_suggestions: (item.copilot_ide_code_completions?.editors ?? []).reduce((acc, editor) => 
-        acc + (editor?.models ?? []).reduce((modelAcc, model) => 
-          modelAcc + (model?.languages ?? []).reduce((langAcc, lang) => 
-            langAcc + (lang?.total_code_suggestions || 0), 0), 0), 0),
-      total_code_acceptances: (item.copilot_ide_code_completions?.editors ?? []).reduce((acc, editor) => 
-        acc + (editor?.models ?? []).reduce((modelAcc, model) => 
-          modelAcc + (model?.languages ?? []).reduce((langAcc, lang) => 
-            langAcc + (lang?.total_code_acceptances || 0), 0), 0), 0),
-      total_code_lines_suggested: (item.copilot_ide_code_completions?.editors ?? []).reduce((acc, editor) => 
-        acc + (editor?.models ?? []).reduce((modelAcc, model) => 
-          modelAcc + (model?.languages ?? []).reduce((langAcc, lang) => 
-            langAcc + (lang?.total_code_lines_suggested || 0), 0), 0), 0),
-      total_code_lines_accepted: (item.copilot_ide_code_completions?.editors ?? []).reduce((acc, editor) => 
-        acc + (editor?.models ?? []).reduce((modelAcc, model) => 
-          modelAcc + (model?.languages ?? []).reduce((langAcc, lang) => 
-            langAcc + (lang?.total_code_lines_accepted || 0), 0), 0), 0),
-      total_chat_engaged_users: item.copilot_ide_chat?.total_engaged_users || 0,
-      total_chats: (item.copilot_ide_chat?.editors ?? []).reduce(
-        (acc, editor) =>
-          acc +
-          ((editor.models ?? []).reduce(
-            (modelAcc, model) => modelAcc + (model.total_chats || 0),
-            0
-          ) || 0),
-        0
-      ),
-      total_chat_insertion_events: (item.copilot_ide_chat?.editors ?? []).reduce(
-        (acc, editor) =>
-          acc +
-          ((editor.models ?? []).reduce(
-            (modelAcc, model) => modelAcc + (model.total_chat_insertion_events || 0),
-            0
-          ) || 0),
-        0
-      ),
-      total_chat_copy_events: (item.copilot_ide_chat?.editors ?? []).reduce(
-        (acc, editor) =>
-          acc +
-          ((editor.models ?? []).reduce(
-            (modelAcc, model) => modelAcc + (model.total_chat_copy_events || 0),
-            0
-          ) || 0),
-        0
-      ),
+      total_active_users: item.total_active_users,
+      total_engaged_users: item.total_engaged_users,
+      total_ide_engaged_users: item.copilot_ide_code_completions.total_engaged_users,
+      total_code_suggestions: (item.copilot_ide_code_completions.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_suggestions || 0), 0), 0), 0),
+      total_code_acceptances: (item.copilot_ide_code_completions.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_acceptances || 0), 0), 0), 0),
+      total_code_lines_suggested: (item.copilot_ide_code_completions.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_lines_suggested || 0), 0), 0), 0),
+      total_code_lines_accepted: (item.copilot_ide_code_completions.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_lines_accepted || 0), 0), 0), 0),
+      total_chat_engaged_users: item.copilot_ide_chat.total_engaged_users,
+      total_chats:  (item.copilot_ide_chat.editors || []).reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chats || 0), 0)), 0),
+      total_chat_insertion_events:  (item.copilot_ide_chat.editors || []).reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chat_insertion_events || 0), 0)), 0),
+      total_chat_copy_events:  (item.copilot_ide_chat.editors || []).reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chat_copy_events || 0), 0)), 0),
       day: item.date,
       breakdown: breakdowns,
       time_frame_week: weekIdentifier,
